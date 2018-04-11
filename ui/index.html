@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Geolocator</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/mdb.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="load-bar">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+    </div>    
+
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+
+                <form class="mt-4">
+                    <p class="h4 text-center mb-4">Address to Coordinates</p>
+                    <p>Convert a physical address into json compatible coordinates.</p>                                            
+
+                    <div class="alert alert-danger" id="form-validation" role="alert"></div>
+    
+                    <div class="form-row">
+                        <div class="col md-form">
+                            <label for="location">Location</label>
+                            <input type="text" id="location" class="form-control" autofocus>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="col">
+                            <label for="latitude">Latitude</label>
+                            <input type="text" id="latitude" class="form-control" readonly="readonly">
+                        </div>
+                        <div class="col">
+                            <label for="longitude">Longitude</label>
+                            <input type="text" id="longitude" class="form-control" readonly="readonly">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="col">
+                            <label for="longitude">Json Friendly</label>
+                            <input type="text" id="latlonjson" class="form-control" readonly="readonly">
+                        </div>
+                    </div>
+                        
+                    <div class="form-row">
+                        <div class="col md-form">
+                            <div class="text-center mt-4">
+                                <input class="btn btn-primary" type="submit" value="Convert"></input>
+                            </div>
+                        </div>
+                    </div>
+            
+                </form>
+                                      
+
+            </div>
+        </div>                
+    </div>
+                      
+    <footer class="page-footer font-small blue pt-4 mt-4">
+        <div class="footer-copyright py-3 text-center">
+            © 2018 Copyright: <a href="http://stuartzahn.net"> Stuartzahn.net </a>
+        </div>
+    </footer>
+    
+  <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
+  <script type="text/javascript" src="js/popper.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="js/mdb.min.js"></script>
+  <script type="text/javascript">
+    new WOW().init();
+
+    function togglePreloader(isVisible){
+        if (isVisible)
+            $(".load-bar").show() 
+        else
+            $(".load-bar").hide();
+    }
+
+    function disableForm(isDisabled){
+        if (isDisabled)
+            $("form input").attr("disabled", "disabled");
+        else
+            $("form input").removeAttr("disabled");            
+    }
+
+    function clearResults(){
+        $("#latitude").val("");
+        $("#longitude").val("");
+        $("#latlonjson").val("");        
+    }
+
+    function clearError(){
+        $("#form-validation").hide();        
+    }
+
+    function getCoordinatesFromAddress(address){
+        /*Please do not try to spam the API as it is rate limited. */
+        var apiKey = "2SKj1PLB322xQgtKosjlr9PJh3eCajYuaGxvwjd3";
+        var apiUrl = 'https://vqgjszob6i.execute-api.us-west-2.amazonaws.com/Live/GoogleMapsGeoCoder';
+
+        return $.ajax({
+            method: 'GET',
+            url: apiUrl + '?address=' + encodeURIComponent(address),
+            headers: {
+                'x-api-key': apiKey
+            },
+            contentType: 'application/json',
+            crossDomain: true,
+            dataType: 'json'
+        });
+    }
+
+    $("form").submit(function(e){
+        e.preventDefault();
+        disableForm(true);
+
+        var address = $("#location").val();
+
+        if (!address || !address.trim()){
+            $("#form-validation").text("Please enter an address.").show();   
+            $("#location").focus();
+            disableForm(false);
+            return;
+        }
+
+        clearError();
+        clearResults();
+
+        togglePreloader(true);
+        getCoordinatesFromAddress(address).done(function(res, status){
+            $("#location").val(res.address);
+            $("#latitude").val(res.lat);
+            $("#longitude").val(res.long);
+            $("#latlonjson").val(JSON.stringify(res));
+        }).fail(function(xhr, status, err){
+            $("#form-validation").text("Unable to geocode address.").show();   
+        }).always(function(){
+            disableForm(false);
+            togglePreloader(false);
+        });
+
+        return false;
+    });
+  </script>
+</body>
+
+</html>
